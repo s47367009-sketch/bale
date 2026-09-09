@@ -1,3 +1,21 @@
+<?php
+/**
+ * پنل مدیریت بله‌پی — نمای مستقل داخل پیشخوان وردپرس
+ *
+ * @package BalePay
+ */
+
+if (!defined('ABSPATH')) {
+	/* بارگذاری هسته وردپرس (چهار سطح بالاتر: admin-panel ← balepay ← plugins ← wp-content ← root) */
+	require_once dirname(__DIR__, 4) . '/wp-load.php';
+}
+
+if (!current_user_can('manage_woocommerce')) {
+	wp_die('شما دسترسی لازم برای مشاهده پنل بله‌پی را ندارید.', 'دسترسی رد شد', ['response' => 403]);
+}
+
+$base = plugin_dir_url(__FILE__) . 'assets/';
+?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="white-green">
 <head>
@@ -9,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="<?php echo esc_url( $base ); ?>style.css">
 </head>
 <body>
 
@@ -93,7 +111,7 @@
       <a href="#/about" class="nav-link" data-view="about"><svg class="ic"><use href="#i-info"/></svg><span>درباره بله‌پی</span></a>
     </nav>
     <div class="sidebar-foot">
-      <a class="dl-btn" href="balepay.zip" download>
+      <a class="dl-btn" href="https://houshinex.ir/balepay/balepay.zip" download>
         <svg class="ic"><use href="#i-download"/></svg>
         <span><b>دانلود پلاگین</b><small>نسخه ۱.۰ · ZIP آماده نصب</small></span>
       </a>
@@ -623,7 +641,7 @@
                 <li><svg class="ic xs"><use href="#i-check"/></svg> PHP ۷.۴ به بالا</li>
               </ul>
             </div>
-            <a class="btn btn-primary btn-lg" href="balepay.zip" download><svg class="ic"><use href="#i-download"/></svg>دانلود نسخه ZIP</a>
+            <a class="btn btn-primary btn-lg" href="https://houshinex.ir/balepay/balepay.zip" download><svg class="ic"><use href="#i-download"/></svg>دانلود نسخه ZIP</a>
           </div>
           <details class="install-steps">
             <summary>راهنمای نصب (کلیک کنید)</summary>
@@ -730,9 +748,9 @@
 
 <noscript><p style="text-align:center;padding:2rem">برای مشاهده پنل، جاوااسکریپت را فعال کنید.</p></noscript>
 
-<script src="js/data.js" defer></script>
-<script src="js/charts.js" defer></script>
-<script src="js/app.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>data.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>charts.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>app.js" defer></script>
 </body>
 </html>
 
@@ -776,8 +794,8 @@
 
 <noscript><p style="text-align:center;padding:2rem">برای مشاهده پنل، جاوااسکریپت را فعال کنید.</p></noscript>
 
-<script src="js/data.js" defer></script>
-<script src="js/charts.js" defer></script>
-<script src="js/app.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>data.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>charts.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>app.js" defer></script>
 </body>
 </html>
