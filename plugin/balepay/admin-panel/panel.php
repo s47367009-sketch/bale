@@ -1,0 +1,801 @@
+<?php
+/**
+ * پنل مدیریت بله‌پی — نمای مستقل داخل پیشخوان وردپرس
+ *
+ * @package BalePay
+ */
+
+if (!defined('ABSPATH')) {
+	/* بارگذاری هسته وردپرس (چهار سطح بالاتر: admin-panel ← balepay ← plugins ← wp-content ← root) */
+	require_once dirname(__DIR__, 4) . '/wp-load.php';
+}
+
+if (!current_user_can('manage_woocommerce')) {
+	wp_die('شما دسترسی لازم برای مشاهده پنل بله‌پی را ندارید.', 'دسترسی رد شد', ['response' => 403]);
+}
+
+$base = plugin_dir_url(__FILE__) . 'assets/';
+?>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="white-green">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>بله‌پی | BalePay — مدیریت هوشمند سفارشات ووکامرس</title>
+  <meta name="description" content="پنل مدیریت بله‌پی — افزونه مدیریت خودکار سفارشات ووکامرس از طریق ربات‌های بله و تلگرام">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23130f08'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23e3b34c' font-family='Tahoma'%3E%D8%A8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<?php echo esc_url( $base ); ?>style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════ SVG Icon Sprite ═══════════════════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3.5" y1="6" x2="4.5" y2="6"/><line x1="3.5" y1="12" x2="4.5" y2="12"/><line x1="3.5" y1="18" x2="4.5" y2="18"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5L4.7 18.6c-.9 1.9.5 4.1 2.6 4.1h9.4c2.1 0 3.5-2.2 2.6-4.1L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-check-c" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="i-x-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M20 7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><circle cx="16.5" cy="13.5" r="1.2"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+    <symbol id="i-trend-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+    <symbol id="i-trend-down" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="i-telegram" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M9.04 15.31 8.7 19.9c.47 0 .68-.2.93-.46l2.24-2.15 4.64 3.4c.85.47 1.46.23 1.69-.78L22.9 4.32c.27-1.23-.45-1.71-1.28-1.41L2.7 10.03c-1.2.47-1.18 1.15-.2 1.45l4.34 1.35L18.2 6.3c.5-.33.95-.15.58.18z"/></symbol>
+    <symbol id="i-bale" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8Z"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13.5" r="0.7" fill="currentColor" stroke="none"/><circle cx="15" cy="13.5" r="0.7" fill="currentColor" stroke="none"/><path d="M9 16.5h6"/><path d="M2 12v4M22 12v4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0 0 20 2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a5 5 0 0 0 5-5A10 10 0 0 0 12 2z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M2 10 12 3l10 7"/><path d="M4 10v9M20 10v9M9.5 13v6M14.5 13v6"/><path d="M2 21h20"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- ═══════════════════════ Sidebar ═══════════════════════ -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark"><svg class="ic"><use href="#i-zap"/></svg></span>
+      <div class="brand-text"><b>بله‌پی</b><small>BalePay</small></div>
+    </div>
+    <nav class="nav" aria-label="منوی اصلی">
+      <a href="#/dashboard" class="nav-link is-active" data-view="dashboard"><svg class="ic"><use href="#i-grid"/></svg><span>داشبورد</span></a>
+      <a href="#/transactions" class="nav-link" data-view="transactions"><svg class="ic"><use href="#i-list"/></svg><span>تراکنش‌ها</span></a>
+      <a href="#/bulk" class="nav-link" data-view="bulk"><svg class="ic"><use href="#i-send"/></svg><span>پیام گروهی</span></a>
+      <a href="#/settings" class="nav-link" data-view="settings"><svg class="ic"><use href="#i-gear"/></svg><span>تنظیمات</span></a>
+      <a href="#/simulator" class="nav-link" data-view="simulator"><svg class="ic"><use href="#i-flask"/></svg><span>شبیه‌ساز</span></a>
+      <a href="#/about" class="nav-link" data-view="about"><svg class="ic"><use href="#i-info"/></svg><span>درباره بله‌پی</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="dl-btn" href="https://houshinex.ir/balepay/balepay.zip" download>
+        <svg class="ic"><use href="#i-download"/></svg>
+        <span><b>دانلود پلاگین</b><small>نسخه ۱.۰ · ZIP آماده نصب</small></span>
+      </a>
+      <span class="ver-pill">نسخه ۱.۰ · BalePay</span>
+      <small>ساخته‌شده توسط پاندا وردپرس</small>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════ Main ═══════════════════════ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="menuBtn" aria-label="منو"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <div class="page-titles">
+        <h1 id="pageTitle">داشبورد</h1>
+        <p id="pageSub">نمای کلی عملکرد فروش و سفارشات</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeBtn" title="تغییر تم" aria-label="تغییر تم"><svg class="ic"><use href="#i-palette"/></svg></button>
+        <button class="icon-btn" id="bellBtn" title="اعلان‌ها" aria-label="اعلان‌ها"><svg class="ic"><use href="#i-bell"/></svg><span class="dot"></span></button>
+        <div class="avatar" title="پاندا وردپرس">پ</div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ═══════════ View: Dashboard ═══════════ -->
+      <section class="view is-active" id="view-dashboard" aria-label="داشبورد">
+        <div class="stats" id="statsGrid"></div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <h3><svg class="ic"><use href="#i-chart"/></svg> فروش ۷ روز اخیر</h3>
+              <span class="muted small">میلیون تومان</span>
+            </div>
+            <div class="chart-wrap"><canvas id="salesChart" aria-label="نمودار فروش ۷ روز اخیر"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h3><svg class="ic"><use href="#i-bag"/></svg> وضعیت سفارشات</h3>
+            </div>
+            <div class="donut-wrap">
+              <div class="donut-canvas"><canvas id="statusChart" aria-label="نمودار وضعیت سفارشات"></canvas></div>
+              <ul class="legend" id="statusLegend"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><svg class="ic"><use href="#i-list"/></svg> آخرین تراکنش‌ها</h3>
+            <a href="#/transactions" class="btn btn-ghost btn-sm">مشاهده همه<svg class="ic sm"><use href="#i-ext"/></svg></a>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>#</th><th>سفارش</th><th>مشتری</th><th>مبلغ</th><th>پلتفرم</th><th>وضعیت</th><th>تاریخ</th></tr></thead>
+              <tbody id="latestBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ View: Transactions ═══════════ -->
+      <section class="view" id="view-transactions" aria-label="لیست تراکنش‌ها">
+        <div class="card">
+          <div class="card-head">
+            <h3><svg class="ic"><use href="#i-list"/></svg> لیست تراکنش‌ها</h3>
+            <div class="head-actions">
+              <a href="#/bulk" class="btn btn-ghost btn-sm"><svg class="ic sm"><use href="#i-send"/></svg>پیام گروهی</a>
+              <button class="btn btn-soft btn-sm" id="csvBtn"><svg class="ic sm"><use href="#i-download"/></svg>خروجی CSV</button>
+            </div>
+          </div>
+
+          <div class="filters">
+            <label class="field"><span>مشتری</span>
+              <select id="txCustomer"><option value="">همه مشتریان</option></select>
+            </label>
+            <label class="field"><span>از تاریخ</span>
+              <input type="text" id="txFrom" inputmode="numeric" placeholder="۱۴۰۳/۰۶/۰۱">
+            </label>
+            <label class="field"><span>تا تاریخ</span>
+              <input type="text" id="txTo" inputmode="numeric" placeholder="۱۴۰۳/۰۶/۳۱">
+            </label>
+            <label class="field"><span>وضعیت</span>
+              <select id="txStatus">
+                <option value="">همه</option>
+                <option>تأیید شده</option><option>در انتظار</option><option>رد شده</option><option>بازگشت خورده</option>
+              </select>
+            </label>
+            <label class="field"><span>پلتفرم</span>
+              <select id="txPlatform">
+                <option value="">همه پلتفرم‌ها</option>
+                <option>بله</option><option>تلگرام</option>
+              </select>
+            </label>
+            <div class="filter-actions">
+              <button class="btn btn-ghost" id="pickAdminBtn"><svg class="ic sm"><use href="#i-user"/></svg>تعیین مدیر</button>
+              <button class="btn btn-primary" id="txFilter"><svg class="ic sm"><use href="#i-filter"/></svg>فیلتر</button>
+            </div>
+          </div>
+
+          <p class="table-info" id="txInfo"></p>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>#</th><th>سفارش</th><th>مشتری</th><th>تلفن</th><th>مبلغ</th><th>پلتفرم</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th></tr></thead>
+              <tbody id="txBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ View: Bulk Message ═══════════ -->
+      <section class="view" id="view-bulk" aria-label="ارسال پیام گروهی">
+        <div class="grid-2 bulk-grid">
+          <div class="card">
+            <div class="card-head"><h3><svg class="ic"><use href="#i-send"/></svg> ارسال پیام گروهی</h3></div>
+            <div class="field-row">
+              <label class="field"><span>ارسال به</span>
+                <select id="bulkTarget">
+                  <option>همه کاربران</option><option>کاربران بله</option><option>کاربران تلگرام</option><option>فعال در ۳۰ روز اخیر</option>
+                </select>
+              </label>
+              <label class="field"><span>زمان ارسال</span>
+                <select id="bulkTime"><option>فوری (هم‌اکنون)</option><option>زمان‌بندی‌شده</option></select>
+              </label>
+            </div>
+            <label class="field"><span>عنوان پیام</span>
+              <input type="text" id="bulkTitle" placeholder="مثلاً: تخفیف ویژه پایان فصل" maxlength="60">
+            </label>
+            <label class="field"><span>متن پیام</span>
+              <textarea id="bulkText" rows="6" placeholder="متن پیام خود را بنویسید..."></textarea>
+            </label>
+            <div class="card-actions">
+              <button class="btn btn-primary" id="bulkSend"><svg class="ic sm"><use href="#i-send"/></svg>ارسال</button>
+              <button class="btn btn-ghost" id="bulkTest">ارسال تست</button>
+            </div>
+          </div>
+
+          <div class="card preview-card">
+            <div class="card-head"><h3><svg class="ic"><use href="#i-eye"/></svg> پیش‌نمایش زنده</h3><span class="badge info" id="pvChannel">بله</span></div>
+            <div class="chat mock-chat">
+              <div class="bubble">
+                <div class="b-title" id="pvTitle">عنوان پیام اینجا...</div>
+                <div class="b-text" id="pvText">متن پیام اینجا نمایش داده می‌شود...</div>
+                <div class="b-meta">اکنون · <svg class="ic xs"><use href="#i-check-c"/></svg></div>
+              </div>
+            </div>
+            <p class="muted small pv-hint">پیش‌نمایش بر اساس انتخاب «ارسال به» به‌روزرسانی می‌شود</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3><svg class="ic"><use href="#i-clock"/></svg> تاریخچه پیام‌های گروهی</h3></div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>عنوان</th><th>تعداد گیرنده</th><th>پلتفرم</th><th>تاریخ</th><th>وضعیت</th></tr></thead>
+              <tbody id="bulkHistoryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ View: Settings ═══════════ -->
+      <section class="view" id="view-settings" aria-label="تنظیمات">
+        <div class="card">
+          <div class="tabs" id="settingsTabs" role="tablist">
+            <button class="tab is-active" data-tab="general">عمومی</button>
+            <button class="tab" data-tab="payment">پرداخت</button>
+            <button class="tab" data-tab="messaging">پیام‌رسانی</button>
+            <button class="tab" data-tab="templates">قالب پیام</button>
+            <button class="tab" data-tab="reports">گزارشات</button>
+            <button class="tab" data-tab="themes">تم‌ها</button>
+            <button class="tab" data-tab="tools">تست و دیباگ</button>
+          </div>
+
+          <!-- ▂▂▂ Tab: General ▂▂▂ -->
+          <div class="tab-panel is-active" data-panel="general">
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head">
+                  <h3><svg class="ic bale-c"><use href="#i-bale"/></svg> اتصال بله</h3>
+                  <span class="badge ok" id="baleStatus">متصل</span>
+                </div>
+                <label class="field"><span>توکن ربات بله</span>
+                  <input type="password" class="ltr mono" value="814562397:AAH-xQz8Kd3vNpR2mLwYtB6cEfGh1JkUoVw" autocomplete="off">
+                </label>
+                <div class="card-actions"><button class="btn btn-soft btn-sm" data-conn="bale"><svg class="ic sm"><use href="#i-zap"/></svg>تست اتصال</button></div>
+              </div>
+
+              <div class="card inset-card">
+                <div class="card-head">
+                  <h3><svg class="ic tg-c"><use href="#i-telegram"/></svg> اتصال تلگرام</h3>
+                  <span class="badge danger" id="tgStatus">قطع</span>
+                </div>
+                <label class="field"><span>توکن ربات تلگرام</span>
+                  <input type="password" class="ltr mono" value="7289134565:BBF9rXk2PqLmZtN8vCeHgYw3JaSdUfKqRz" autocomplete="off">
+                </label>
+                <div class="card-actions"><button class="btn btn-soft btn-sm" data-conn="telegram"><svg class="ic sm"><use href="#i-zap"/></svg>تست اتصال</button></div>
+              </div>
+
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-user"/></svg> آیدی مدیر</h3></div>
+                <div class="field-row">
+                  <label class="field"><span>آیدی مدیر بله</span>
+                    <div class="input-group">
+                      <input type="text" class="ltr mono" id="baleAdminId" value="1260583615">
+                      <button class="btn btn-ghost btn-sm" data-pick="baleAdminId">انتخاب از لیست</button>
+                    </div>
+                  </label>
+                  <label class="field"><span>آیدی مدیر تلگرام</span>
+                    <div class="input-group">
+                      <input type="text" class="ltr mono" id="tgAdminId" value="7123456789">
+                      <button class="btn btn-ghost btn-sm" data-pick="tgAdminId">انتخاب از لیست</button>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-bell"/></svg> تنظیمات ارسال اعلان</h3></div>
+                <div class="notify-groups">
+                  <div class="notify-group">
+                    <p class="group-title">اعلان به مشتری</p>
+                    <label class="switch"><input type="checkbox" checked><span class="track"></span><span>ارسال از طریق بله</span></label>
+                    <label class="switch"><input type="checkbox"><span class="track"></span><span>ارسال از طریق تلگرام</span></label>
+                  </div>
+                  <div class="notify-group">
+                    <p class="group-title">اعلان به مدیر</p>
+                    <label class="switch"><input type="checkbox" checked><span class="track"></span><span>ارسال از طریق بله</span></label>
+                    <label class="switch"><input type="checkbox"><span class="track"></span><span>ارسال از طریق تلگرام</span></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card inset-card">
+              <div class="card-head"><h3><svg class="ic"><use href="#i-link"/></svg> Webhook</h3></div>
+              <label class="field"><span>URL وب‌هوک</span>
+                <div class="input-group">
+                  <input type="text" class="ltr mono" id="webhookUrl" value="https://houshinex.ir/wp-json/balepay/v1/webhook">
+                  <button class="btn btn-ghost btn-sm" id="copyWebhook"><svg class="ic sm"><use href="#i-copy"/></svg>کپی</button>
+                  <button class="btn btn-soft btn-sm" id="saveWebhook"><svg class="ic sm"><use href="#i-save"/></svg>ثبت</button>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Payment ▂▂▂ -->
+          <div class="tab-panel" data-panel="payment">
+            <div class="setting-grid" id="cardsWrap">
+              <div class="card inset-card bank-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-card"/></svg> کارت بانکی ۱</h3></div>
+                <label class="field"><span>شماره کارت</span><input type="text" class="ltr mono" placeholder="6037-9912-3456-7890" value="6037-9912-3456-7890" inputmode="numeric"></label>
+                <label class="field"><span>نام بانک</span>
+                  <select><option>بانک ملی</option><option>بانک ملت</option><option>بانک صادرات</option><option>بانک تجارت</option><option>بانک پاسارگاد</option><option>بانک سامان</option><option>بانک آینده</option><option>بانک سپه</option></select>
+                </label>
+                <label class="field"><span>نام صاحب حساب</span><input type="text" value="علی محمدی"></label>
+              </div>
+              <div class="card inset-card bank-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-card"/></svg> کارت بانکی ۲</h3></div>
+                <label class="field"><span>شماره کارت</span><input type="text" class="ltr mono" placeholder="6219-8610-1234-5678" value="6219-8610-1234-5678" inputmode="numeric"></label>
+                <label class="field"><span>نام بانک</span>
+                  <select><option>بانک ملی</option><option selected>بانک سامان</option><option>بانک ملت</option><option>بانک صادرات</option><option>بانک تجارت</option><option>بانک پاسارگاد</option><option>بانک آینده</option><option>بانک سپه</option></select>
+                </label>
+                <label class="field"><span>نام صاحب حساب</span><input type="text" value="علی محمدی"></label>
+              </div>
+            </div>
+            <div class="card-actions start">
+              <button class="btn btn-ghost" id="addCardBtn"><svg class="ic sm"><use href="#i-plus"/></svg>افزودن کارت جدید</button>
+            </div>
+
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-bank"/></svg> حساب شبا</h3></div>
+                <label class="field"><span>شماره شبا</span><input type="text" class="ltr mono" value="IR820540102680020817909002" id="shebaInput"></label>
+                <div class="field-row">
+                  <label class="field"><span>مهلت پرداخت (ساعت)</span><input type="number" class="ltr" value="24" min="1" max="168"></label>
+                  <label class="field"><span>وضعیت پس از تأیید</span>
+                    <select><option>در حال پردازش (processing)</option><option>تکمیل شده (completed)</option></select>
+                  </label>
+                </div>
+              </div>
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-file"/></svg> متن راهنمای پرداخت</h3></div>
+                <label class="field"><span>متن نمایش‌داده‌شده به مشتری</span>
+                  <textarea rows="5">لطفاً مبلغ سفارش را به یکی از کارت‌های فوق کارت به کارت کنید و تصویر رسید را دقیقاً در همین چت ربات ارسال نمایید. پس از بررسی مدیر، نتیجه تأیید برای شما ارسال می‌شود.</textarea>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Messaging ▂▂▂ -->
+          <div class="tab-panel" data-panel="messaging">
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-phone"/></svg> پیامک (ملی پیامک)</h3></div>
+                <div class="field-row">
+                  <label class="field"><span>نام کاربری ملی پیامک</span><input type="text" class="ltr" placeholder="username"></label>
+                  <label class="field"><span>رمز عبور</span><input type="password" placeholder="••••••••"></label>
+                </div>
+                <label class="field"><span>شماره فرستنده</span><input type="text" class="ltr mono" placeholder="+9850004000"></label>
+                <label class="switch"><input type="checkbox"><span class="track"></span><span>پیامک فلش</span></label>
+                <label class="switch"><input type="checkbox"><span class="track"></span><span>ارسال پیامک به مشتری</span></label>
+              </div>
+
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic bale-c"><use href="#i-bale"/></svg> سفیر بله (ارسال با شماره تلفن)</h3><span class="badge info">پرداختی</span></div>
+                <p class="muted small">سفیر بله اجازه می‌دهد به کاربران بله با شماره تلفن پیام بفرستید — حتی اگر ربات را start نکرده باشند.</p>
+                <div class="field-row">
+                  <label class="field"><span>API Access Key</span><input type="password" class="ltr mono" placeholder="sk-..." autocomplete="off"></label>
+                  <label class="field"><span>Bot ID</span><input type="text" class="ltr mono" placeholder="bp_12345"></label>
+                </div>
+                <label class="switch"><input type="checkbox"><span class="track"></span><span>ارسال پیام بله به مشتری از طریق سفیر</span></label>
+              </div>
+            </div>
+
+            <div class="card inset-card">
+              <div class="card-head"><h3><svg class="ic"><use href="#i-zap"/></svg> اولویت کانال‌ها</h3></div>
+              <ol class="priority-list">
+                <li><span class="p-num">۱</span><div><b>ربات بله/تلگرام</b><small>رایگان (اگر کاربر متصل باشد)</small></div><span class="badge ok">رایگان</span></li>
+                <li><span class="p-num">۲</span><div><b>سفیر بله</b><small>با شماره تلفن</small></div><span class="badge warn">پرداختی</span></li>
+                <li><span class="p-num">۳</span><div><b>SMS</b><small>با شماره تلفن</small></div><span class="badge warn">پرداختی</span></li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Templates ▂▂▂ -->
+          <div class="tab-panel" data-panel="templates">
+            <div class="card inset-card">
+              <div class="card-head"><h3><svg class="ic"><use href="#i-terminal"/></svg> متغیرها</h3><span class="muted small">روی هر متغیر کلیک کنید تا در انتهای قالب فعال درج شود</span></div>
+              <div class="chips" id="varChips">
+                <button class="chip ltr">{order_id}</button><button class="chip ltr">{total}</button><button class="chip ltr">{customer}</button><button class="chip ltr">{date}</button><button class="chip ltr">{items}</button><button class="chip ltr">{cards}</button><button class="chip ltr">{order_url}</button>
+              </div>
+            </div>
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-message"/></svg> قالب‌های پیام به مشتری</h3></div>
+                <label class="field"><span>پیام ثبت سفارش</span><textarea class="tpl-area" rows="7">🛒 سفارش {order_id} ثبت شد
+💰 مبلغ: {total}
+👤 {customer}
+📦 اقلام:
+{items}
+
+💳 کارت‌های پرداخت:
+{cards}
+
+✅ پس از پرداخت، تصویر رسید را در همین چت ارسال کنید.
+🔗 {order_url}</textarea></label>
+                <label class="field"><span>پیام تأیید پرداخت</span><textarea class="tpl-area" rows="4">✅ پرداخت سفارش {order_id} تأیید شد!
+💰 {total} — {customer}
+سفارش شما در حال پردازش است 🎉</textarea></label>
+                <label class="field"><span>پیام رد پرداخت</span><textarea class="tpl-area" rows="4">❌ پرداخت سفارش {order_id} تأیید نشد.
+{customer} عزیز، لطفاً رسید صحیح را مجدداً ارسال کنید یا با پشتیبانی تماس بگیرید.</textarea></label>
+              </div>
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-bot"/></svg> قالب‌های پیام به مدیر</h3></div>
+                <label class="field"><span>پیام سفارش جدید (به مدیر)</span><textarea class="tpl-area" rows="7">🔔 سفارش جدید {order_id}
+👤 {customer}
+💰 {total}
+📅 {date}
+📦 {items}
+
+⏳ در انتظار پرداخت کارت به کارت</textarea></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Reports ▂▂▂ -->
+          <div class="tab-panel" data-panel="reports">
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-chart"/></svg> تنظیمات گزارش خودکار</h3></div>
+                <div class="field-row">
+                  <label class="field"><span>نوع گزارش</span>
+                    <select id="reportType"><option>غیرفعال</option><option selected>روزانه</option><option>هفتگی</option></select>
+                  </label>
+                  <label class="field"><span>ساعت ارسال</span><input type="text" class="ltr" value="09:00" id="reportTime"></label>
+                </div>
+                <label class="field" id="reportDayField"><span>روز ارسال (هفتگی)</span>
+                  <select id="reportDay"><option>شنبه</option><option>یکشنبه</option><option>دوشنبه</option><option>سه‌شنبه</option><option>چهارشنبه</option><option>پنجشنبه</option><option>جمعه</option></select>
+                </label>
+                <label class="field"><span>ارسال از طریق</span>
+                  <select><option>بله</option><option>تلگرام</option><option selected>هر دو</option></select>
+                </label>
+                <div class="card-actions"><button class="btn btn-soft btn-sm" id="reportTest"><svg class="ic sm"><use href="#i-send"/></svg>ارسال تست</button></div>
+              </div>
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-eye"/></svg> پیش‌نمایش گزارش</h3></div>
+                <pre class="code-block" dir="ltr">📊 گزارش روزانه فروش
+📅 ساعت 09:00
+─────────────────────
+📦 سفارشات:
+├ کل سفارشات: ۳۸
+├ تأیید شده: ۲۹
+├ در انتظار: ۶
+└ رد شده: ۳
+
+💰 فروش کل: ۲۸,۴۰۰,۰۰۰ تومان
+📈 رشد نسبت به قبل: ۱۲٪
+
+👤 کاربران جدید ربات: ۵
+⏱ میانگین زمان تأیید: ۸ دقیقه</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Themes ▂▂▂ -->
+          <div class="tab-panel" data-panel="themes">
+            <div class="card inset-card">
+              <div class="card-head">
+                <h3><svg class="ic"><use href="#i-palette"/></svg> انتخاب تم رنگی</h3>
+                <span class="muted small">انتخاب شما ذخیره می‌شود</span>
+              </div>
+              <div class="themes" id="themeGrid"></div>
+            </div>
+          </div>
+
+          <!-- ▂▂▂ Tab: Tools (Test & Debug) ▂▂▂ -->
+          <div class="tab-panel" data-panel="tools">
+            <div class="setting-grid">
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-terminal"/></svg> دیباگ وضعیت تنظیمات</h3></div>
+                <p class="muted small">برای عیب‌یابی اعلان‌ها، وضعیت ذخیره‌شده تنظیمات را بررسی کنید:</p>
+                <pre class="code-block" id="debugBlock" dir="ltr"></pre>
+              </div>
+              <div class="card inset-card">
+                <div class="card-head"><h3><svg class="ic"><use href="#i-send"/></svg> تست ارسال پیام</h3></div>
+                <div class="field-row">
+                  <label class="field"><span>پلتفرم</span>
+                    <select id="tmsgPlatform"><option>بله</option><option>تلگرام</option></select>
+                  </label>
+                  <label class="field"><span>آیدی گیرنده (chat_id)</span><input type="text" class="ltr mono" id="tmsgChat" value="1260583615"></label>
+                </div>
+                <label class="field"><span>متن پیام</span><textarea rows="3" id="tmsgText">سلام! این یک پیام تستی از بله‌پی است ✅</textarea></label>
+                <div class="card-actions"><button class="btn btn-primary btn-sm" id="tmsgSend"><svg class="ic sm"><use href="#i-send"/></svg>ارسال</button></div>
+              </div>
+            </div>
+
+            <div class="card inset-card">
+              <div class="card-head"><h3><svg class="ic"><use href="#i-link"/></svg> تست Webhook</h3></div>
+              <div class="field-row">
+                <label class="field"><span>پلتفرم</span>
+                  <select id="hookPlatform"><option>بله</option><option>تلگرام</option></select>
+                </label>
+                <label class="field"><span>نوع تست</span>
+                  <select id="hookType"><option>شبیه‌سازی callback تأیید</option><option>شبیه‌سازی callback رد</option><option>شبیه‌سازی /start</option><option>شبیه‌سازی آپلود رسید</option></select>
+                </label>
+              </div>
+              <div class="card-actions"><button class="btn btn-soft btn-sm" id="hookRun"><svg class="ic sm"><use href="#i-play"/></svg>اجرای تست</button></div>
+              <p class="field-label">آخرین پاسخ Webhook</p>
+              <pre class="code-block" id="webhookResp" dir="ltr">200 OK · { "ok": true, "result": "processed" }</pre>
+            </div>
+
+            <div class="card inset-card">
+              <div class="card-head">
+                <h3><svg class="ic"><use href="#i-file"/></svg> لاگ‌های سیستم</h3>
+                <button class="btn btn-ghost btn-sm" id="clearLogs"><svg class="ic sm"><use href="#i-trash"/></svg>پاک کردن</button>
+              </div>
+              <div class="logs" id="logsWrap"></div>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-primary" id="saveSettings"><svg class="ic sm"><use href="#i-save"/></svg>ذخیره تنظیمات</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ View: Simulator ═══════════ -->
+      <section class="view" id="view-simulator" aria-label="شبیه‌ساز">
+        <div class="card">
+          <div class="card-head">
+            <h3><svg class="ic"><use href="#i-flask"/></svg> شبیه‌ساز سناریو</h3>
+            <span class="muted small">جریان کار ربات را قبل از راه‌اندازی تست کنید</span>
+          </div>
+          <div class="scenarios">
+            <button class="btn btn-soft" data-sim="order"><svg class="ic sm"><use href="#i-plus"/></svg>ثبت سفارش</button>
+            <button class="btn btn-soft" data-sim="receipt"><svg class="ic sm"><use href="#i-upload"/></svg>آپلود رسید</button>
+            <button class="btn btn-soft ok-c" data-sim="approve"><svg class="ic sm"><use href="#i-check"/></svg>تأیید مدیر</button>
+            <button class="btn btn-soft danger-c" data-sim="reject"><svg class="ic sm"><use href="#i-x"/></svg>رد مدیر</button>
+            <button class="btn btn-soft warn-c" data-sim="undo"><svg class="ic sm"><use href="#i-undo"/></svg>بازگشت Undo</button>
+            <button class="btn btn-primary" data-sim="full"><svg class="ic sm"><use href="#i-play"/></svg>سناریوی کامل</button>
+            <button class="btn btn-ghost" data-sim="reset"><svg class="ic sm"><use href="#i-refresh"/></svg>ریست</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card chat-card">
+            <div class="card-head">
+              <h3><svg class="ic bale-c"><use href="#i-bale"/></svg> چت مشتری</h3>
+              <span class="badge info">بله</span>
+            </div>
+            <div class="chat" id="customerChat"><div class="chat-hint"><svg class="ic"><use href="#i-bale"/></svg><p>روی یکی از سناریوها کلیک کنید</p></div></div>
+          </div>
+          <div class="card chat-card">
+            <div class="card-head">
+              <h3><svg class="ic"><use href="#i-shield"/></svg> چت مدیر</h3>
+              <span class="badge">پنل تأیید</span>
+            </div>
+            <div class="chat" id="adminChat"><div class="chat-hint"><svg class="ic"><use href="#i-shield"/></svg><p>پیام‌های مدیر اینجا نمایش داده می‌شود</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ View: About ═══════════ -->
+      <section class="view" id="view-about" aria-label="درباره بله‌پی">
+        <div class="card hero">
+          <div class="hero-mark"><svg class="ic"><use href="#i-zap"/></svg></div>
+          <h2>بله‌پی</h2>
+          <p class="hero-ver">نسخه ۱.۰ · BalePay</p>
+          <p class="hero-desc">افزونه‌ای قدرتمند برای مدیریت خودکار سفارشات ووکامرس از طریق ربات‌های بله و تلگرام. تأیید پرداخت کارت به کارت را هوشمند و سریع کنید.</p>
+          <div class="hero-links">
+            <a class="btn btn-primary" href="https://houshinex.ir/balepay/balepay-demo.html" target="_blank" rel="noopener"><svg class="ic sm"><use href="#i-ext"/></svg>درباره بله‌پی</a>
+            <a class="btn btn-ghost" href="https://pandawp.ir" target="_blank" rel="noopener"><svg class="ic sm"><use href="#i-ext"/></svg>درباره پاندا وردپرس</a>
+          </div>
+        </div>
+
+        <div class="card download-card" id="downloadCard">
+          <div class="dl-row">
+            <span class="dl-icon"><svg class="ic"><use href="#i-download"/></svg></span>
+            <div class="dl-info">
+              <h3>دانلود پلاگین وردپرس</h3>
+              <p>نسخه ۱.۰ · ZIP آماده نصب · درگاه کارت به کارت + ربات بله و تلگرام</p>
+              <ul class="dl-meta">
+                <li><svg class="ic xs"><use href="#i-check"/></svg> ووکامرس ۸ به بالا</li>
+                <li><svg class="ic xs"><use href="#i-check"/></svg> وردپرس ۶ به بالا</li>
+                <li><svg class="ic xs"><use href="#i-check"/></svg> PHP ۷.۴ به بالا</li>
+              </ul>
+            </div>
+            <a class="btn btn-primary btn-lg" href="https://houshinex.ir/balepay/balepay.zip" download><svg class="ic"><use href="#i-download"/></svg>دانلود نسخه ZIP</a>
+          </div>
+          <details class="install-steps">
+            <summary>راهنمای نصب (کلیک کنید)</summary>
+            <ol>
+              <li>فایل ZIP را از دکمه روبه‌رو دانلود کنید.</li>
+              <li>وارد پیشخوان وردپرس شوید: <b>افزونه‌ها ← افزودن ← بارگذاری افزونه</b>.</li>
+              <li>فایل <span class="mono ltr">balepay.zip</span> را انتخاب و روی <b>«هم‌اکنون نصب کن»</b> بزنید و افزونه را <b>فعال</b> کنید.</li>
+              <li>به <b>ووکامرس ← پیکربندی ← پرداخت‌ها</b> بروید و درگاه <b>«بله‌پی (کارت به کارت)»</b> را فعال کنید.</li>
+              <li>توکن ربات، کارت‌های بانکی و قالب پیام‌ها را در تنظیمات درگاه وارد کنید — تمام!</li>
+            </ol>
+          </details>
+        </div>
+
+        <div class="features">
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-card"/></svg></span><h4>درگاه کارت به کارت</h4><p>مدیریت کامل پرداخت‌های کارت به کارت</p></div>
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-bell"/></svg></span><h4>اعلان خودکار</h4><p>اطلاع‌رسانی هوشمند به مشتری و مدیر</p></div>
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-check-c"/></svg></span><h4>تأیید از ربات</h4><p>تأیید/رد با دکمه‌های Inline</p></div>
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-undo"/></svg></span><h4>بازگشت (Undo)</h4><p>امکان بازگشت تا ۳۰ ثانیه</p></div>
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-chart"/></svg></span><h4>گزارش خودکار</h4><p>گزارش روزانه/هفتگی فروش</p></div>
+          <div class="card feat"><span class="feat-ic"><svg class="ic"><use href="#i-link"/></svg></span><h4>اتصال دوگانه</h4><p>پشتیبانی همزمان بله و تلگرام</p></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3><svg class="ic"><use href="#i-check-c"/></svg> نیازمندی‌ها</h3></div>
+            <div class="table-wrap">
+              <table class="table req-table">
+                <tbody>
+                  <tr><td>PHP</td><td>۷.۴ یا بالاتر</td></tr>
+                  <tr><td>وردپرس</td><td>۶.۰ یا بالاتر</td></tr>
+                  <tr><td>ووکامرس</td><td>۸.۰ یا بالاتر</td></tr>
+                  <tr><td>افزونه OpenSSL</td><td><span class="badge ok">فعال</span></td></tr>
+                  <tr><td>cURL</td><td><span class="badge ok">فعال</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3><svg class="ic"><use href="#i-box"/></svg> نقشه راه آینده</h3></div>
+            <ol class="roadmap">
+              <li><span class="phase-tag now">فاز ۱ · نسخه ۱.۰</span><p>درگاه کارت به کارت، اعلان خودکار، تأیید از ربات، Undo، گزارش، اتصال دوگانه</p></li>
+              <li><span class="phase-tag">فاز ۲ · نسخه ۱.۵</span><p>آپلود رسید از بله/تلگرام، کد رهگیری، مدیریت وضعیت از ربات</p></li>
+              <li><span class="phase-tag">فاز ۳ · نسخه ۲.۰</span><p>چت‌بات پیگیری، هشدار موجودی، سیستم تیکت، کاتالوگ محصولات</p></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card panda-card">
+          <div class="panda-head">
+            <span class="panda-logo">🐼</span>
+            <div><h3>پاندا وردپرس</h3><span class="muted small ltr">PandaWP</span></div>
+          </div>
+          <p class="panda-desc">ما در پاندا وردپرس عاشق وردپرس هستیم! پلاگین‌ها و قالب‌هایی طراحی می‌کنیم که کار شما را آسان و سایتتان را زیبا کند. پشتیبانی دوستانه و به‌روزرسانی‌های مداوم، اولویت ماست.</p>
+          <ul class="link-list">
+            <li><svg class="ic"><use href="#i-globe"/></svg><span>وب‌سایت:</span><a class="ltr" href="https://pandawp.ir" target="_blank" rel="noopener">pandawp.ir</a></li>
+            <li><svg class="ic"><use href="#i-mail"/></svg><span>ایمیل:</span><a class="ltr" href="mailto:info@pandawp.ir">info@pandawp.ir</a></li>
+            <li><svg class="ic"><use href="#i-shield"/></svg><span>پشتیبانی:</span><a class="ltr" href="mailto:support@pandawp.ir">support@pandawp.ir</a></li>
+          </ul>
+        </div>
+
+        <div class="grid-2">
+          <div class="card prod-card">
+            <span class="feat-ic"><svg class="ic"><use href="#i-message"/></svg></span>
+            <div><h4>پلاگین پیامچی</h4><p class="muted small">سیستم پیام‌رسانی و پشتیبانی آنلاین</p></div>
+            <button class="btn btn-ghost btn-sm prod-link">مشاهده<svg class="ic sm"><use href="#i-ext"/></svg></button>
+          </div>
+          <div class="card prod-card">
+            <span class="feat-ic"><svg class="ic"><use href="#i-layout"/></svg></span>
+            <div><h4>قالب‌های وردپرس</h4><p class="muted small">قالب‌های حرفه‌ای و واکنش‌گرا</p></div>
+            <button class="btn btn-ghost btn-sm prod-link">مشاهده<svg class="ic sm"><use href="#i-ext"/></svg></button>
+          </div>
+        </div>
+
+        <div class="card rate-card">
+          <h3>به بله‌پی امتیاز دهید</h3>
+          <p class="muted">رضایت شما باعث افتخار ماست</p>
+          <div class="stars" id="stars" role="radiogroup" aria-label="امتیازدهی"></div>
+          <p class="rate-msg muted small" id="rateMsg"></p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>بله‌پی · نسخه ۱.۰ — توسعه‌یافته توسط <a href="https://pandawp.ir" target="_blank" rel="noopener">پاندا وردپرس</a></span>
+    </footer>
+  </div>
+</div>
+
+<!-- ═══════════════════════ User Picker Modal ═══════════════════════ -->
+<div class="modal-backdrop" id="userModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="انتخاب کاربر">
+    <div class="modal-head">
+      <h3>انتخاب از لیست کاربران</h3>
+      <button class="icon-btn" id="userModalClose" aria-label="بستن"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="user-list" id="userList"></div>
+  </div>
+</div>
+
+<!-- Toasts + Chart Tooltip -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="chart-tip" id="chartTip"></div>
+
+<noscript><p style="text-align:center;padding:2rem">برای مشاهده پنل، جاوااسکریپت را فعال کنید.</p></noscript>
+
+<script src="<?php echo esc_url( $base ); ?>data.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>charts.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>app.js" defer></script>
+</body>
+</html>
+
+</body>
+</html>
+     <div><h4>قالب‌های وردپرس</h4><p class="muted small">قالب‌های حرفه‌ای و واکنش‌گرا</p></div>
+            <button class="btn btn-ghost btn-sm prod-link">مشاهده<svg class="ic sm"><use href="#i-ext"/></svg></button>
+          </div>
+        </div>
+
+        <div class="card rate-card">
+          <h3>به بله‌پی امتیاز دهید</h3>
+          <p class="muted">رضایت شما باعث افتخار ماست</p>
+          <div class="stars" id="stars" role="radiogroup" aria-label="امتیازدهی"></div>
+          <p class="rate-msg muted small" id="rateMsg"></p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>بله‌پی · نسخه ۱.۰ — توسعه‌یافته توسط <a href="https://pandawp.ir" target="_blank" rel="noopener">پاندا وردپرس</a></span>
+    </footer>
+  </div>
+</div>
+
+<!-- ═══════════════════════ User Picker Modal ═══════════════════════ -->
+<div class="modal-backdrop" id="userModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="انتخاب کاربر">
+    <div class="modal-head">
+      <h3>انتخاب از لیست کاربران</h3>
+      <button class="icon-btn" id="userModalClose" aria-label="بستن"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="user-list" id="userList"></div>
+  </div>
+</div>
+
+<!-- Toasts + Chart Tooltip -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="chart-tip" id="chartTip"></div>
+
+<noscript><p style="text-align:center;padding:2rem">برای مشاهده پنل، جاوااسکریپت را فعال کنید.</p></noscript>
+
+<script src="<?php echo esc_url( $base ); ?>data.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>charts.js" defer></script>
+<script src="<?php echo esc_url( $base ); ?>app.js" defer></script>
+</body>
+</html>
